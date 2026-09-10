@@ -1,118 +1,207 @@
 # SwarmSight
 
-**A governance layer that lets government safely put AI agents onto real
-casework — by making the agent structurally unable to leak data, act on its own,
-or break policy.**
+An experimental control plane for governing AI agents in public-sector workflows.
 
-Authority decides, Intelligence proposes, the ledger proves it. A human makes
-every decision that affects a citizen; the agent only prepares and checks.
+**Intelligence proposes. Authority decides. The ledger records.**
 
----
+[Live demo](https://swarmsight-2t9m-iok6txap3-maryam-ai-devs-projects.vercel.app/) · [Why it exists](#why-swarmsight-exists) · [Core principle](#the-core-principle) · [Architecture](#architecture) · [Run locally](#run-locally) · [Thirty Labs](https://thirty-labs.com/)
 
-## The problem: public-sector work is slow because it *has to be* careful
+> Experimental research project by Thirty Labs.
+> SwarmSight is a working prototype, not a production-certified government system.
 
-A council can't just point an AI agent at housing casework. Before anything can
-happen, a person has to redact sensitive data, check the case against current
-policy, and — crucially — someone has to be able to *prove* afterwards that no
-rule was broken and no data was leaked. That caution is correct, but it's what
-makes the work take hours per case and makes adopting *any* new tool take months.
-
-SwarmSight keeps the caution and removes the time. It turns four slow manual
-gates into automatic, provable ones:
-
-| What used to be slow | Before | With SwarmSight |
-|---|---|---|
-| **Redact sensitive data** before an agent/tool can touch a case | Manual, per case, error-prone | A capability broker masks NI numbers, medical notes, etc. **at the boundary** — the agent never receives them. Instant, per fetch, ledgered. |
-| **Assure an AI tool** is safe for a regulated workflow | Weeks of manual review + sign-off | The **Arena** generates test scenarios from the department's own policy, runs them against the live agent, and issues a certificate with a hard ceiling — in minutes. |
-| **Turn a new policy or law into enforced rules** | Weeks of interpretation + rollout | Claude reads the policy document (or live UK legislation) and proposes the rules it implies + the date it takes effect; a human approves once; it's versioned. |
-| **Prove to an auditor what happened** | Days of reconstruction | A hash-chained, append-only ledger records every decision, mask, and fetch. One-click proof pack, tamper-evident. |
-
-The guarantee isn't "the agent behaved." It's "the agent *couldn't* misbehave,
-and here's the proof."
+<!-- Add one product screenshot or a short GIF here:
+     case enters → agent proposes → policy checks → officer decides → ledger records
+     A single image communicates more than several introductory paragraphs. -->
 
 ---
 
-## What it is
+## Why SwarmSight exists
 
-SwarmSight sits between untrusted AI agents and government systems (SharePoint,
-case data). Every agent is governed by four mechanisms:
+AI agents are moving from generating text to carrying out multi-step work.
 
-- **Capability broker** — the agent never touches source systems directly. It
-  asks the broker, which fetches from SharePoint and masks sensitive fields
-  *before* anything reaches the agent. Masking is a per-field intersection of the
-  source's own permission and the department's sensitivity policy.
-- **Department-owned, versioned policy** — agents don't own their rules. The
-  *department* holds a versioned, append-only rulebook per workflow; an agent is
-  matched to the policy that governs its task. Policies are inferred from the
-  council's documents and UK legislation, never hardcoded. A change is a new
-  version, so past decisions stay auditable under the rules that applied at the time.
-- **The Arena** — before an agent goes live it's tested against scenarios
-  generated from the actual policy (one per rule, plus adversarial cases) and
-  earns a certificate with a hard ceiling ("prepare and check only" — never send,
-  close, or release).
-- **Append-only, hash-chained ledger** — every decision, mask, and fetch is
-  recorded and verifiable, so any action can be proven after the fact.
+That becomes more consequential in government. An agent working on housing
+casework may encounter personal data, changing policy, and decisions that affect
+a citizen directly.
+
+The usual answer is to keep a human in the loop. But human involvement only
+provides meaningful control when that person can see what the agent is doing,
+understand which rules apply, and stop an action before it proceeds.
+
+SwarmSight explores what the layer between AI capability and public-sector
+authority could look like.
+
+---
+
+## The core principle
+
+SwarmSight separates intelligence from authority.
+
+| Layer | Responsibility |
+|---|---|
+| Intelligence | Interprets the case and proposes an action |
+| Authority | Applies permissions, policy, and assurance rules |
+| Human officer | Reviews consequential decisions |
+| Ledger | Records what happened and why |
+
+> The agent does not decide what it is authorised to do.
+
+SwarmSight explores how unsafe actions can be constrained by architecture,
+rather than discouraged through instructions alone.
+
+---
+
+## See it through one case
+
+A housing case contains an eviction risk, dependent children, and sensitive
+personal information.
+
+1. The case enters through the authority layer.
+2. Sensitive fields are masked before reaching the agent.
+3. The agent prepares a proposed action.
+4. The policy engine evaluates that proposal against the active rules.
+5. A high-consequence case is held for an officer.
+6. The officer receives a plain-English explanation.
+7. The decision, policy version, and information access are recorded.
+
+<!-- Screenshots worth adding for three moments:
+     the officer's case view · a policy hold or escalation · a ledger entry -->
+
+---
+
+## What the prototype contains
+
+### Capability broker
+
+Controls how agents access external systems and masks restricted fields before
+data reaches the intelligence service. Masking is a per-field intersection of the
+source system's own permission and the department's sensitivity policy.
+
+### Versioned policy
+
+Keeps workflow rules within the authority layer. The department holds an
+append-only rulebook per workflow, and an agent is matched to the policy that
+governs its task. Policy changes create new versions, so past decisions can be
+traced to the rules active at the time. Policies are inferred from council
+documents and UK legislation rather than hardcoded.
+
+### Assurance arena
+
+Runs policy-derived and adversarial scenarios against an agent before it receives
+a certificate for a defined set of actions. A certificate carries a hard ceiling
+(for example, "prepare and check only" — never send, close, or release).
+
+### Append-only ledger
+
+Records decisions, data access, policy versions, and review events in a
+hash-linked audit trail, so an action can be examined after the fact.
+
+---
+
+## Scope and limitations
+
+SwarmSight demonstrates an architectural approach to governing agents. It does
+not prove that an AI system is universally safe.
+
+The prototype can:
+
+- Restrict agent access through a controlled broker
+- Apply versioned workflow policy
+- Test defined behaviours before deployment
+- Require human review for selected decisions
+- Record events in a tamper-evident chain
+
+The prototype does not currently:
+
+- Provide formal verification of every possible agent behaviour
+- Replace legal, security, or equality-impact assessments
+- Guarantee the correctness of inferred policy
+- Prevent every failure outside its modelled boundaries
+- Provide production certification for government deployment
 
 ---
 
 ## Architecture
 
-```
-┌────────────┐   proxied    ┌───────────────────────────┐      ┌──────────────┐
-│ frontend   │  /_authority │ authority (Java 21)        │      │  SharePoint  │
-│ Next.js    │─────────────▶│  broker · policy · arena   │─────▶│  (MS Graph)  │
-│ (browser)  │              │  ledger · auth             │      └──────────────┘
-└────────────┘              │                            │      ┌──────────────┐
-                            │        decides, masks      │─────▶│  Postgres 16 │
-                            └─────────────┬──────────────┘      └──────────────┘
-                                          │ governs (agent only proposes)
-                                          ▼
-                            ┌───────────────────────────┐
-                            │ intelligence (FastAPI)     │
-                            │  POST /agent/act — Claude  │
-                            └───────────────────────────┘
+```mermaid
+flowchart TD
+    UI["Role-based frontend (Next.js)"] --> AUTH["Authority service (Java 21)"]
+    AUTH --> BROKER["Capability broker"]
+    AUTH --> POLICY["Policy and assurance"]
+    AUTH --> LEDGER["Append-only ledger"]
+    AUTH --> AI["Intelligence service (FastAPI)"]
+    BROKER --> SP["SharePoint (Microsoft Graph)"]
+    AUTH --> DB["PostgreSQL"]
 ```
 
-- **`authority/`** — Spring Boot (Java 21), Postgres 16. Holds the ledger, the
-  decisions, the capability broker, the policy engine, the arena, and auth. This
-  is where verdicts are made and proven. **The agent never calls Intelligence
-  directly — Authority is always the first stop.**
-- **`intelligence/`** — FastAPI (Python 3.12). The live agent under assurance:
+The browser only ever talks to the frontend origin, which proxies API calls to
+Authority server-side (no CORS, no token in the browser). The agent never calls
+Intelligence directly — Authority is always the first stop, and the agent only
+proposes.
+
+- **`authority/`** — Java 21, Spring Boot, PostgreSQL 16, Flyway. Holds the
+  ledger, the decisions, the capability broker, the policy engine, the arena, and
+  auth. This is where verdicts are made and recorded.
+- **`intelligence/`** — Python 3.12, FastAPI. The agent under assurance:
   `POST /agent/act` returns a *proposed* action. It reasons with Claude
   (`claude-opus-4-8`) when `ANTHROPIC_API_KEY` is set, and falls back to a
-  deterministic safe agent otherwise, so the stack runs offline. It only
-  proposes; Authority decides, the certificate constrains, the broker masks.
-- **`frontend/`** — Next.js (React). Role-based desks (officer / head of
-  department / service owner), a guided story tour, and a live control tower.
-  The browser only ever talks to this origin; it proxies API calls to Authority
-  server-side (no CORS, no token in the browser).
+  deterministic safe agent otherwise, so the stack runs offline.
+- **`frontend/`** — Next.js and React. Role-based desks (officer, head of
+  department, service owner), a guided tour, and a live control tower.
+- **`sample-sharepoint-docs/`** — local demonstration data used when no
+  SharePoint tenant is configured.
 
 ---
 
-## Running locally
+## Repository structure
 
-```
+| Path | Contents |
+|---|---|
+| `authority/` | Authority service — broker, policy, arena, ledger, auth |
+| `intelligence/` | Intelligence service — the agent under assurance |
+| `frontend/` | Role-based web frontend |
+| `sample-sharepoint-docs/` | Demonstration case and policy documents |
+| `docker-compose.yml` | Authority, Intelligence, and PostgreSQL for local runs |
+| `DEPLOY.md` | Step-by-step deployment checklist (Railway + Vercel) |
+| `DECISIONS.md` | Design decision log |
+
+---
+
+## Run locally
+
+### Requirements
+
+- Docker and Docker Compose
+- Node.js and npm
+- Java 21 — only if running the authority service outside Docker
+- Python 3.12 — only if running intelligence outside Docker
+
+### Start the backend
+
+```bash
 docker compose up --build
 ```
 
-Brings up Authority, Intelligence, and Postgres. Authority runs Flyway
+Brings up Authority, Intelligence, and PostgreSQL. Authority runs Flyway
 migrations and seeds the demo on first boot.
 
-- Authority health: http://localhost:8080/health
-- Intelligence health: http://localhost:8000/health
+- Authority health: <http://localhost:8080/health>
+- Intelligence health: <http://localhost:8000/health>
 
-Then start the frontend (it runs as a host process, not in compose):
+### Start the frontend
 
+```bash
+cd frontend
+npm install
+npm run dev
 ```
-cd frontend && npm install && npm run dev
-```
 
-Open **http://localhost:3000** and sign in.
+Open <http://localhost:3000> and sign in.
 
-### Demo accounts
+<details>
+<summary>Demo accounts</summary>
 
-Seeded on first boot when `swarmsight.demo-seed` is on (the default). With the
-`docker-compose.yml` dev values:
+Seeded on first boot when `swarmsight.demo-seed` is on (the default), using the
+dev values in `docker-compose.yml`:
 
 | Account | Email | Password | Sees |
 |---|---|---|---|
@@ -121,41 +210,21 @@ Seeded on first boot when `swarmsight.demo-seed` is on (the default). With the
 | Service owner | `owner@swarmsight.local` | `swarmsight-demo` | Policy inference, agent assurance |
 | Admin | `admin@swarmsight.local` | `changeme-admin` | Account management |
 
-These are **dev-only** values set in `docker-compose.yml` (`AUTH_*`). Override
-every one in production: `AUTH_JWT_SECRET` (>= 32 bytes), `AUTH_ADMIN_PASSWORD`,
-and set `swarmsight.demo-seed` off so no demo accounts are seeded.
+These are **dev-only** values. In production, override `AUTH_JWT_SECRET`
+(>= 32 bytes) and `AUTH_ADMIN_PASSWORD`, and set `swarmsight.demo-seed` off so no
+demo accounts are seeded.
+
+</details>
 
 ---
 
-## Connecting live SharePoint (optional)
+## Try the governed path
 
-The `sharepoint-housing` connector reads live documents over Microsoft Graph
-when configured, and falls back to an in-process mock otherwise — so the whole
-demo runs with **no tenant**. To go live, register an Entra app (client secret,
-Graph `Sites.Selected` or `Sites.Read.All` with admin consent) and set:
+This example submits a housing action containing eviction risk and dependent
+children. The authority layer should hold it for human review rather than letting
+the agent proceed.
 
-```
-SHAREPOINT_TENANT_ID=<directory (tenant) id>
-SHAREPOINT_CLIENT_ID=<application (client) id>
-SHAREPOINT_CLIENT_SECRET=<client secret value>
-SHAREPOINT_SITE=contoso.sharepoint.com:/sites/Housing
-SHAREPOINT_MODE=document
-```
-
-Drop application documents named with a case ref (e.g.
-`Housing-Application-HX-5821.txt`) into the site's library and they appear as
-live cases. The log line `SharePoint connector: mode=..., graph=live` confirms
-it; `GET /sources/sharepoint/health` tests each Graph step and names any that fails.
-
-Extraction (reading fields from a document) runs *before* the permission mirror,
-so the agent still only ever sees the masked record (NI masked, medical/unmapped
-denied) regardless of where the data came from.
-
----
-
-## Trying the governed path directly
-
-```
+```bash
 curl -X POST http://localhost:8080/decide -H 'Content-Type: application/json' -d '{
   "requestId": "demo-1", "runId": "run-1", "caseRef": "CASE-1",
   "actor": "agent-housing-1", "workflow": "HA-09", "action": "draft_response",
@@ -163,36 +232,98 @@ curl -X POST http://localhost:8080/decide -H 'Content-Type: application/json' -d
 }'
 ```
 
-A case with eviction risk **and** dependent children holds for an officer with a
-plain-English brief, rather than letting the agent proceed.
+A case with eviction risk **and** dependent children is held for an officer with
+a plain-English brief.
 
 ---
 
-## Running tests
+## Tests
 
-Authority (needs a running Docker daemon — integration tests use Testcontainers
-for Postgres):
+| Component | Command | Coverage |
+|---|---|---|
+| Authority | `cd authority && mvn test` | Policy, broker, ledger, and decision paths |
+| Intelligence | `cd intelligence && pip install -r requirements.txt && pytest` | Agent response and safe fallback behaviour |
 
-```
-cd authority && mvn test
-```
-
-Intelligence:
-
-```
-cd intelligence && pip install -r requirements.txt && pytest
-```
+Authority integration tests use Testcontainers, so a running Docker daemon is
+required. The frontend does not have an automated test suite yet.
 
 ---
 
-## Deploying
+## Connecting live SharePoint (optional)
 
-The demo deploys to **Railway** (Postgres + authority + intelligence) and
-**Vercel** (frontend). The whole frontend→backend contract is one env var,
-`AUTHORITY_ORIGIN`; the browser never makes a cross-origin call. See `DEPLOY.md`
-for the step-by-step checklist.
+The `sharepoint-housing` connector reads live documents over Microsoft Graph when
+configured, and falls back to an in-process mock otherwise — so the whole demo
+runs with no tenant.
 
-## Tech
+To go live, register an Entra app and grant it the **minimum** access it needs:
+prefer `Sites.Selected` (scoped to the single site you grant) over
+`Sites.Read.All`, which reads every site in the tenant. Then set:
 
-Java 21 · Spring Boot · PostgreSQL · Flyway · Python · FastAPI · Next.js /
-React · Microsoft Graph (SharePoint) · Anthropic Claude (`claude-opus-4-8`).
+```bash
+SHAREPOINT_TENANT_ID=<directory (tenant) id>
+SHAREPOINT_CLIENT_ID=<application (client) id>
+SHAREPOINT_CLIENT_SECRET=<client secret value>
+SHAREPOINT_SITE=contoso.sharepoint.com:/sites/Housing
+SHAREPOINT_MODE=document
+```
+
+Drop application documents named with a case ref (for example,
+`Housing-Application-HX-5821.txt`) into the site's library and they appear as live
+cases.
+
+- **Confirming the mode.** The log line `SharePoint connector: mode=..., graph=live`
+  confirms live mode; `GET /sources/sharepoint/health` tests each Graph step and
+  names any that fails.
+- **What is masked.** Extraction runs *before* the permission mirror, so the agent
+  still only ever sees the masked record (NI number masked, medical and unmapped
+  fields denied) regardless of where the data came from.
+- **Secrets.** `SHAREPOINT_CLIENT_SECRET` and the auth values are credentials.
+  Keep them in environment variables or a secret store. `.env` files must not be
+  committed — they are listed in `.gitignore`, and `.env.example` shows the shape
+  without real values.
+
+---
+
+## Research context
+
+SwarmSight is part of Thirty Labs' exploration of Human Control of Agentic
+Systems:
+
+> How can autonomous systems act while remaining governable?
+
+The project investigates one possible adaptation layer between AI capability,
+institutional policy, and human authority.
+
+- [Thirty Labs](https://thirty-labs.com/)
+- [SwarmSight live demo](https://swarmsight-2t9m-iok6txap3-maryam-ai-devs-projects.vercel.app/)
+- Thirty Signals, Issue 001 — _add link_
+- Architecture notes: [`DECISIONS.md`](DECISIONS.md), [`DEPLOY.md`](DEPLOY.md)
+
+---
+
+## Roadmap
+
+- [ ] Expand policy-derived assurance scenarios
+- [ ] Add clearer officer override and dissent records
+- [ ] Introduce end-to-end observability
+- [ ] Test additional public-sector workflows
+- [ ] Evaluate usability with public-sector practitioners
+- [ ] Document the threat model
+- [ ] Add a frontend and end-to-end test suite
+
+---
+
+## Contributing
+
+Issues, technical critiques, and research discussion are welcome.
+
+## Licence
+
+Licensed under the Apache License 2.0. See [`LICENSE`](LICENSE).
+
+## About Thirty Labs
+
+Thirty Labs is a product and research lab exploring how technology can adapt to
+people, contexts, and institutions.
+
+[thirty-labs.com](https://thirty-labs.com/)
