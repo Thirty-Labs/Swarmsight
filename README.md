@@ -9,9 +9,7 @@ An experimental control plane for governing AI agents in public-sector workflows
 > Experimental research project by Thirty Labs.
 > SwarmSight is a working prototype, not a production-certified government system.
 
-<!-- Add one product screenshot or a short GIF here:
-     case enters → agent proposes → policy checks → officer decides → ledger records
-     A single image communicates more than several introductory paragraphs. -->
+![SwarmSight governed workflow](docs/assets/swarmsight-demo.gif)
 
 ---
 
@@ -68,7 +66,19 @@ personal information.
 
 ---
 
-## What the prototype contains
+## How the governed workflow works
+
+```
+Case enters → Data is restricted → Agent proposes
+   → Policy checks → Officer decides → Ledger records
+```
+
+Every action an agent takes passes through this sequence. The agent never sees
+unmasked data, never checks its own permissions, and never has the final word.
+
+---
+
+## Core components
 
 ### Capability broker
 
@@ -94,29 +104,6 @@ a certificate for a defined set of actions. A certificate carries a hard ceiling
 
 Records decisions, data access, policy versions, and review events in a
 hash-linked audit trail, so an action can be examined after the fact.
-
----
-
-## Scope and limitations
-
-SwarmSight demonstrates an architectural approach to governing agents. It does
-not prove that an AI system is universally safe.
-
-The prototype can:
-
-- Restrict agent access through a controlled broker
-- Apply versioned workflow policy
-- Test defined behaviours before deployment
-- Require human review for selected decisions
-- Record events in a tamper-evident chain
-
-The prototype does not currently:
-
-- Provide formal verification of every possible agent behaviour
-- Replace legal, security, or equality-impact assessments
-- Guarantee the correctness of inferred policy
-- Prevent every failure outside its modelled boundaries
-- Provide production certification for government deployment
 
 ---
 
@@ -149,6 +136,29 @@ proposes.
   department, service owner), a guided tour, and a live control tower.
 - **`sample-sharepoint-docs/`** — local demonstration data used when no
   SharePoint tenant is configured.
+
+---
+
+## Scope and limitations
+
+SwarmSight demonstrates an architectural approach to governing agents. It does
+not prove that an AI system is universally safe.
+
+The prototype can:
+
+- Restrict agent access through a controlled broker
+- Apply versioned workflow policy
+- Test defined behaviours before deployment
+- Require human review for selected decisions
+- Record events in a tamper-evident chain
+
+The prototype does not currently:
+
+- Provide formal verification of every possible agent behaviour
+- Replace legal, security, or equality-impact assessments
+- Guarantee the correctness of inferred policy
+- Prevent every failure outside its modelled boundaries
+- Provide production certification for government deployment
 
 ---
 
